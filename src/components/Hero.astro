@@ -1,0 +1,74 @@
+<section class="py-16 sm:py-24 relative scanlines">
+  <div class="relative z-10 sm:ml-[240px] md:ml-[280px]">
+    <h1 class="font-mono text-3xl sm:text-4xl font-bold mb-2 glow reveal" style={`color: var(--text-heading);`}>
+      <span class="glitch" data-text="Tibor Rogulja">Tibor Rogulja</span>
+    </h1>
+    <p class="font-mono text-lg sm:text-xl mb-6 reveal" style={`color: var(--text-muted);`}>
+      Software Engineer
+    </p>
+    <p class="font-mono text-base" style={`color: var(--text-heading);`}>
+      <span style={`color: var(--text-muted);`}>&gt;</span>
+      <span id="typewriter"></span><span class="cursor-blink" style={`color: var(--text-accent);`}>_</span>
+    </p>
+  </div>
+  <div class="terminal-portrait reveal hidden sm:block">
+    <img src="/profile-terminal.png" alt="Tibor Rogulja" />
+  </div>
+</section>
+
+<script>
+  function initTypewriter() {
+    const el = document.getElementById('typewriter');
+    if (!el) return;
+
+    const phrases = [
+      ' building things for the web',
+      ' automating the boring stuff',
+      ' turning coffee into code',
+      ' debugging in production',
+      ' pushing to main on friday',
+    ];
+
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let timeout: ReturnType<typeof setTimeout>;
+
+    function tick() {
+      const current = phrases[phraseIndex];
+
+      if (!isDeleting) {
+        el!.textContent = current.slice(0, charIndex + 1);
+        charIndex++;
+        if (charIndex === current.length) {
+          timeout = setTimeout(() => { isDeleting = true; tick(); }, 3000);
+          return;
+        }
+        timeout = setTimeout(tick, 50);
+      } else {
+        el!.textContent = current.slice(0, charIndex);
+        charIndex--;
+        if (charIndex < 0) {
+          isDeleting = false;
+          charIndex = 0;
+          phraseIndex = (phraseIndex + 1) % phrases.length;
+          timeout = setTimeout(tick, 400);
+          return;
+        }
+        timeout = setTimeout(tick, 30);
+      }
+    }
+
+    // Clean up any previous instance
+    if ((window as any).__typewriterTimeout) {
+      clearTimeout((window as any).__typewriterTimeout);
+    }
+
+    el.textContent = '';
+    timeout = setTimeout(tick, 600);
+    (window as any).__typewriterTimeout = timeout;
+  }
+
+  initTypewriter();
+  document.addEventListener('astro:after-swap', initTypewriter);
+</script>

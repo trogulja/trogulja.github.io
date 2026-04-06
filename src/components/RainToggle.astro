@@ -1,0 +1,87 @@
+<button
+  id="rain-toggle"
+  class="p-2 rounded-md transition-colors cursor-pointer"
+  style={`color: var(--text-muted); background-color: var(--bg-secondary);`}
+  aria-label="Toggle matrix rain"
+  title="Toggle matrix rain effect"
+>
+  <!-- Rain on icon -->
+  <svg class="icon-rain-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+    <path d="M4 4v4"></path>
+    <path d="M9 2v6"></path>
+    <path d="M14 4v4"></path>
+    <path d="M19 2v6"></path>
+    <path d="M4 12v4"></path>
+    <path d="M9 14v6"></path>
+    <path d="M14 12v4"></path>
+    <path d="M19 10v6"></path>
+  </svg>
+  <!-- Rain off icon -->
+  <svg class="icon-rain-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+    <path d="M4 4v4" opacity="0.3"></path>
+    <path d="M9 2v6" opacity="0.3"></path>
+    <path d="M14 4v4" opacity="0.3"></path>
+    <path d="M19 2v6" opacity="0.3"></path>
+    <line x1="2" y1="2" x2="22" y2="22"></line>
+  </svg>
+</button>
+
+<script>
+  function initRainToggle() {
+    const btn = document.getElementById('rain-toggle');
+    if (!btn) return;
+
+    const iconOn = btn.querySelector('.icon-rain-on') as HTMLElement | null;
+    const iconOff = btn.querySelector('.icon-rain-off') as HTMLElement | null;
+    if (!iconOn || !iconOff) return;
+
+    function updateIcons() {
+      const enabled = localStorage.getItem('matrix-rain') !== 'off';
+      iconOn!.style.display = enabled ? 'block' : 'none';
+      iconOff!.style.display = enabled ? 'none' : 'block';
+    }
+
+    updateIcons();
+
+    // Clone to remove old listeners
+    const newBtn = btn.cloneNode(true) as HTMLElement;
+    btn.parentNode?.replaceChild(newBtn, btn);
+
+    const newOn = newBtn.querySelector('.icon-rain-on') as HTMLElement;
+    const newOff = newBtn.querySelector('.icon-rain-off') as HTMLElement;
+
+    // Re-apply icon state after clone
+    const enabled = localStorage.getItem('matrix-rain') !== 'off';
+    newOn.style.display = enabled ? 'block' : 'none';
+    newOff.style.display = enabled ? 'none' : 'block';
+
+    newBtn.addEventListener('click', () => {
+      const canvas = document.getElementById('matrix-rain') as HTMLCanvasElement | null;
+      const isOn = localStorage.getItem('matrix-rain') !== 'off';
+
+      if (isOn) {
+        // Turn off
+        localStorage.setItem('matrix-rain', 'off');
+        if (canvas) canvas.style.display = 'none';
+        if ((window as any).__matrixRainId) {
+          cancelAnimationFrame((window as any).__matrixRainId);
+          (window as any).__matrixRainId = null;
+        }
+      } else {
+        // Turn on
+        localStorage.setItem('matrix-rain', 'on');
+        if (canvas) {
+          canvas.style.display = 'block';
+          // Re-init the animation
+          (window as any).__matrixRainRestart?.();
+        }
+      }
+
+      newOn.style.display = isOn ? 'none' : 'block';
+      newOff.style.display = isOn ? 'block' : 'none';
+    });
+  }
+
+  initRainToggle();
+  document.addEventListener('astro:after-swap', initRainToggle);
+</script>

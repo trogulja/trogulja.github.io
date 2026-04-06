@@ -1,0 +1,164 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import MatrixRain from '../components/MatrixRain.astro';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+}
+
+const {
+  title = 'Tibor Rogulja',
+  description = 'Software Engineer',
+  ogImage = '/profile-terminal.png',
+} = Astro.props;
+const pageTitle = title === 'Tibor Rogulja' ? title : `${title} | Tibor Rogulja`;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const ogImageURL = new URL(ogImage, Astro.site);
+---
+
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#0a0a0a" />
+
+    <!-- SEO -->
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImageURL} />
+    <meta property="og:site_name" content="Tibor Rogulja" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageURL} />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <title>{pageTitle}</title>
+    <ClientRouter />
+    <script is:inline>
+      // Apply saved theme immediately to prevent flash
+      (function() {
+        const saved = localStorage.getItem('theme');
+        const theme = saved || 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
+  </head>
+  <body class="min-h-screen flex flex-col antialiased cursor-none">
+    <MatrixRain />
+    <div class="custom-cursor" id="custom-cursor"></div>
+    <div class="flashlight" id="flashlight"></div>
+    <Header />
+    <main class="flex-1 w-full max-w-3xl mx-auto px-6 py-8 relative z-[1]">
+      <slot />
+    </main>
+    <Footer />
+    <script>
+      // Scroll reveal observer
+      function initReveal() {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+        );
+
+        document.querySelectorAll('.reveal, .stagger-children').forEach((el) => {
+          observer.observe(el);
+        });
+      }
+
+      // Card tilt effect
+      function initTilt() {
+        document.querySelectorAll('[data-tilt]').forEach((card) => {
+          const el = card as HTMLElement;
+          el.addEventListener('mousemove', (e: MouseEvent) => {
+            const rect = el.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = (y - centerY) / centerY * -6;
+            const rotateY = (x - centerX) / centerX * 6;
+            el.style.transform = `perspective(600px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+          });
+          el.addEventListener('mouseleave', () => {
+            el.style.transform = 'perspective(600px) rotateX(0deg) rotateY(0deg)';
+          });
+        });
+      }
+
+      // Custom cursor + flashlight
+      function initCursorEffects() {
+        const cursor = document.getElementById('custom-cursor');
+        const flashlight = document.getElementById('flashlight');
+        if (!cursor || !flashlight) return;
+
+        // Only show on non-touch devices
+        const hasPointer = window.matchMedia('(pointer: fine)').matches;
+        if (!hasPointer) {
+          document.body.classList.remove('cursor-none');
+          return;
+        }
+
+        document.addEventListener('mousemove', (e) => {
+          cursor.style.left = e.clientX - 4 + 'px';
+          cursor.style.top = e.clientY - 4 + 'px';
+          cursor.classList.add('visible');
+          flashlight.classList.add('active');
+          flashlight.style.setProperty('--mouse-x', e.clientX + 'px');
+          flashlight.style.setProperty('--mouse-y', e.clientY + 'px');
+        });
+
+        document.addEventListener('mouseleave', () => {
+          cursor.classList.remove('visible');
+          flashlight.classList.remove('active');
+        });
+
+        // Scale cursor on interactive elements
+        document.querySelectorAll('a, button, [data-tilt]').forEach((el) => {
+          el.addEventListener('mouseenter', () => cursor.classList.add('hovering'));
+          el.addEventListener('mouseleave', () => cursor.classList.remove('hovering'));
+        });
+      }
+
+      // Init on page load and after view transitions
+      initReveal();
+      initTilt();
+      initCursorEffects();
+      document.addEventListener('astro:after-swap', () => {
+        initReveal();
+        initTilt();
+        initCursorEffects();
+      });
+    </script>
+  </body>
+</html>

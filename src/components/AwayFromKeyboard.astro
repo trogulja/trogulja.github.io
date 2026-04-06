@@ -1,0 +1,291 @@
+---
+// Away from Keyboard — things I fix and build outside of code.
+// Replace placeholder images with real photos in public/afk/.
+// Each project supports up to 5 images for the lightbox carousel.
+
+const builds = [
+  {
+    title: 'Shotgun Bike Seat',
+    description: 'A shop clerk told me my bike was too old for any child seat on the market. So I built one.',
+    thumbnail: '/afk/bike-000.webp',
+    images: [
+      { src: '/afk/bike-001.webp', caption: 'Wooden prototype — measuring twice, cutting once-ish.' },
+      { src: '/afk/bike-002.webp', caption: 'Painted and assembled. Looks almost professional.' },
+      { src: '/afk/bike-003.webp', caption: 'Folding foot pegs — held in place by magnets.' },
+      { src: '/afk/bike-004.webp', caption: 'Metal clamp holds the seat. If it looks stupid but works...' },
+      { src: '/afk/bike-005.webp', caption: 'Field tested and approved.' },
+    ],
+  },
+  {
+    title: 'Roof Bugfix',
+    description: 'Storm took the sheet metal, I put it back. Heights aren\'t my thing, but neither is paying someone for a two-hour job.',
+    thumbnail: '/afk/roof-000.webp',
+    images: [
+      { src: '/afk/roof-001.webp', caption: 'Storm damage — sheet metal torn off the ridge.' },
+      { src: '/afk/roof-002.webp', caption: 'View from the top, surveying the damage.' },
+      { src: '/afk/roof-003.webp', caption: 'Climbing rope and harness — safety first.' },
+      { src: '/afk/roof-004.webp', caption: 'New sheet metal screwed into place.' },
+      { src: '/afk/roof-005.webp', caption: 'Sealed overlap detail.' },
+    ],
+  },
+  {
+    title: 'Toilet Refactor',
+    description: 'The last plumber "fixed" it so well it started leaking everywhere. So I had to refactor it myself.',
+    thumbnail: '/afk/toilet-000.webp',
+    images: [
+      { src: '/afk/toilet-001.webp', caption: 'Not entirely sure what I\'m doing, but the parts are here.' },
+      { src: '/afk/toilet-002.webp', caption: 'Old flush mechanism — calcium won this round.' },
+      { src: '/afk/toilet-003.webp', caption: 'Lesson learned: always replace the seal. Reusing old ones is how you get leaks.' },
+      { src: '/afk/toilet-004.webp', caption: 'A bottle of muriatic acid later — fittings ready for fresh seals.' },
+      { src: '/afk/toilet-005.webp', caption: 'RTFM. Always. No exceptions.' },
+    ],
+  },
+];
+---
+
+<section class="py-12 reveal">
+  <h2 class="font-mono text-xl font-bold mb-2" style={`color: var(--text-heading);`}>
+    ## Away from Keyboard
+  </h2>
+  <p class="text-sm mb-6" style={`color: var(--text-muted);`}>
+    I fix things. Not just code.
+  </p>
+  <div class="grid gap-4 sm:grid-cols-3 stagger-children">
+    {builds.map((build, i) => (
+      <button
+        class="tilt-card rounded-lg border overflow-hidden group text-left cursor-pointer flex flex-col items-stretch"
+        style={`background-color: var(--bg-card); border-color: var(--border-color);`}
+        data-tilt
+        data-lightbox={i}
+      >
+        <div class="aspect-[4/3] overflow-hidden" style={`background-color: var(--bg-secondary);`}>
+          {build.thumbnail ? (
+            <img
+              src={build.thumbnail}
+              alt={build.title}
+              class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              style="filter: saturate(0.6) brightness(0.9);"
+            />
+          ) : (
+            <div
+              class="w-full h-full flex items-center justify-center"
+              style={`color: var(--text-muted);`}
+            >
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.4;">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+            </div>
+          )}
+        </div>
+        <div class="p-4">
+          <h3 class="font-mono font-bold text-sm mb-1" style={`color: var(--text-heading);`}>
+            {build.title}
+          </h3>
+          <p class="text-xs leading-relaxed" style={`color: var(--text-primary);`}>
+            {build.description}
+          </p>
+        </div>
+      </button>
+    ))}
+  </div>
+</section>
+
+<!-- Lightbox overlay -->
+<div id="afk-lightbox" class="afk-lightbox" aria-hidden="true">
+  <div class="afk-lightbox-backdrop"></div>
+  <div class="afk-lightbox-content">
+    <div class="afk-lightbox-header">
+      <h3 id="afk-lightbox-title" class="font-mono font-bold" style={`color: var(--text-heading);`}></h3>
+      <button id="afk-lightbox-close" class="afk-lightbox-btn cursor-pointer" aria-label="Close" style={`color: var(--text-muted);`}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="afk-lightbox-carousel">
+      <button id="afk-prev" class="afk-lightbox-nav afk-lightbox-nav--prev cursor-pointer" aria-label="Previous" style={`color: var(--text-heading);`}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <div id="afk-lightbox-img" class="afk-lightbox-img-wrapper">
+        <!-- image inserted here by JS -->
+      </div>
+      <button id="afk-next" class="afk-lightbox-nav afk-lightbox-nav--next cursor-pointer" aria-label="Next" style={`color: var(--text-heading);`}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+    <div class="afk-lightbox-footer">
+      <p id="afk-lightbox-desc" class="text-sm" style={`color: var(--text-primary);`}></p>
+      <div id="afk-lightbox-dots" class="afk-lightbox-dots"></div>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ builds }}>
+  function initLightbox() {
+    const lightbox = document.getElementById('afk-lightbox');
+    const titleEl = document.getElementById('afk-lightbox-title');
+    const descEl = document.getElementById('afk-lightbox-desc');
+    const imgWrapper = document.getElementById('afk-lightbox-img');
+    const dotsEl = document.getElementById('afk-lightbox-dots');
+    const closeBtn = document.getElementById('afk-lightbox-close');
+    const prevBtn = document.getElementById('afk-prev');
+    const nextBtn = document.getElementById('afk-next');
+    if (!lightbox || !titleEl || !descEl || !imgWrapper || !dotsEl || !closeBtn || !prevBtn || !nextBtn) return;
+
+    let current = 0;
+    let slides = [];
+
+    function show(index) {
+      current = index;
+      imgWrapper.innerHTML = `<img src="${slides[current].src}" alt="" class="afk-lightbox-img" />`;
+      descEl.textContent = slides[current].caption;
+      dotsEl.innerHTML = slides.map((_, i) =>
+        `<span class="afk-lightbox-dot ${i === current ? 'active' : ''}"></span>`
+      ).join('');
+      prevBtn.style.display = slides.length > 1 ? '' : 'none';
+      nextBtn.style.display = slides.length > 1 ? '' : 'none';
+    }
+
+    function open(buildIndex) {
+      const build = builds[buildIndex];
+      titleEl.textContent = build.title;
+      slides = build.images;
+      show(0);
+      lightbox.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function close() {
+      lightbox.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    // Card click handlers
+    document.querySelectorAll('[data-lightbox]').forEach((btn) => {
+      btn.addEventListener('click', () => open(Number(btn.getAttribute('data-lightbox'))));
+    });
+
+    closeBtn.addEventListener('click', close);
+    lightbox.querySelector('.afk-lightbox-backdrop').addEventListener('click', close);
+    prevBtn.addEventListener('click', () => show((current - 1 + slides.length) % slides.length));
+    nextBtn.addEventListener('click', () => show((current + 1) % slides.length));
+
+    document.addEventListener('keydown', (e) => {
+      if (lightbox.getAttribute('aria-hidden') !== 'false') return;
+      if (e.key === 'Escape') close();
+      if (e.key === 'ArrowLeft') show((current - 1 + slides.length) % slides.length);
+      if (e.key === 'ArrowRight') show((current + 1) % slides.length);
+    });
+  }
+
+  initLightbox();
+  document.addEventListener('astro:after-swap', initLightbox);
+</script>
+
+<style>
+  .afk-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease;
+  }
+  .afk-lightbox[aria-hidden="true"] {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .afk-lightbox[aria-hidden="false"] {
+    opacity: 1;
+  }
+  .afk-lightbox-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+  }
+  .afk-lightbox-content {
+    position: relative;
+    width: 90vw;
+    max-width: 700px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .afk-lightbox-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .afk-lightbox-btn {
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    transition: opacity 0.15s;
+  }
+  .afk-lightbox-btn:hover {
+    opacity: 0.7;
+  }
+  .afk-lightbox-carousel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .afk-lightbox-nav {
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+  }
+  .afk-lightbox-nav:hover {
+    opacity: 0.7;
+  }
+  .afk-lightbox-img-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    background-color: var(--bg-secondary);
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+  .afk-lightbox-img-wrapper :global(img) {
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+  }
+  .afk-lightbox-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: center;
+  }
+  .afk-lightbox-dots {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .afk-lightbox-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--text-muted);
+    opacity: 0.4;
+    transition: opacity 0.15s;
+  }
+  .afk-lightbox-dot.active {
+    opacity: 1;
+    background-color: var(--text-heading);
+  }
+</style>

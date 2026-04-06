@@ -1,0 +1,49 @@
+---
+import { getCollection } from 'astro:content';
+
+const projects = (await getCollection('projects'))
+  .sort((a, b) => (a.data.order ?? 0) - (b.data.order ?? 0));
+---
+
+<section id="projects" class="py-12 reveal">
+  <h2 class="font-mono text-xl font-bold mb-6" style={`color: var(--text-heading);`}>
+    ## Projects
+  </h2>
+  <div class="grid gap-4 sm:grid-cols-2 stagger-children">
+    {projects.map((project) => (
+      <a
+        href={`/projects/${project.id}`}
+        class="tilt-card block p-5 rounded-lg border group"
+        style={`background-color: var(--bg-card); border-color: var(--border-color);`}
+        data-tilt
+      >
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-mono font-bold group-hover:underline" style={`color: var(--text-heading);`}>
+            {project.data.title}
+          </h3>
+          <span class="text-xs font-mono px-2 py-0.5 rounded" style={`background-color: var(--bg-secondary); color: var(--text-heading);`}>
+            {project.data.status}
+          </span>
+        </div>
+        <p class="text-sm mb-3" style={`color: var(--text-primary);`}>
+          {project.data.description}
+        </p>
+        <div class="flex flex-wrap items-center gap-2">
+          {project.data.tags.map((tag) => (
+            <span
+              class="text-xs font-mono px-2 py-0.5 rounded"
+              style={`background-color: var(--bg-secondary); color: var(--text-muted);`}
+            >
+              {tag}
+            </span>
+          ))}
+          {project.data.github && (
+            <span class="text-xs font-mono ml-auto" style={`color: var(--text-muted);`}>
+              GitHub
+            </span>
+          )}
+        </div>
+      </a>
+    ))}
+  </div>
+</section>

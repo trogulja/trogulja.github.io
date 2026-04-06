@@ -1,0 +1,97 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+import RainToggle from './RainToggle.astro';
+---
+
+<header class="w-full border-b" style={`border-color: var(--border-color);`}>
+  <nav class="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="/" class="font-mono text-lg font-bold" style={`color: var(--text-heading);`}>
+      ~/trogulja
+    </a>
+
+    <!-- Desktop nav -->
+    <div class="hidden sm:flex items-center gap-6">
+      <a href="/" class="text-sm hover:underline" style={`color: var(--text-primary);`}>Home</a>
+      <a href="/blog" class="text-sm hover:underline" style={`color: var(--text-primary);`}>Blog</a>
+      <RainToggle />
+      <ThemeToggle />
+    </div>
+
+    <!-- Mobile: theme toggle + hamburger -->
+    <div class="flex sm:hidden items-center gap-3">
+      <RainToggle />
+      <ThemeToggle />
+      <button
+        id="mobile-menu-btn"
+        class="p-1 cursor-pointer"
+        style={`color: var(--text-muted);`}
+        aria-label="Toggle menu"
+        aria-expanded="false"
+      >
+        <svg class="icon-menu" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+        <svg class="icon-close" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile dropdown -->
+  <div id="mobile-menu" class="sm:hidden hidden border-t" style={`border-color: var(--border-color);`}>
+    <div class="max-w-3xl mx-auto px-6 py-4 flex flex-col gap-4">
+      <a href="/" class="text-sm font-mono hover:underline" style={`color: var(--text-primary);`}>Home</a>
+      <a href="/blog" class="text-sm font-mono hover:underline" style={`color: var(--text-primary);`}>Blog</a>
+    </div>
+  </div>
+</header>
+
+<script>
+  function initMobileMenu() {
+    const btn = document.getElementById('mobile-menu-btn');
+    const menu = document.getElementById('mobile-menu');
+    if (!btn || !menu) return;
+
+    const iconMenu = btn.querySelector('.icon-menu') as HTMLElement;
+    const iconClose = btn.querySelector('.icon-close') as HTMLElement;
+    if (!iconMenu || !iconClose) return;
+
+    // Clone to remove old listeners
+    const newBtn = btn.cloneNode(true) as HTMLElement;
+    btn.parentNode?.replaceChild(newBtn, btn);
+
+    const newIconMenu = newBtn.querySelector('.icon-menu') as HTMLElement;
+    const newIconClose = newBtn.querySelector('.icon-close') as HTMLElement;
+
+    // Reset state
+    menu.classList.add('hidden');
+    newIconMenu.style.display = 'block';
+    newIconClose.style.display = 'none';
+    newBtn.setAttribute('aria-expanded', 'false');
+
+    newBtn.addEventListener('click', () => {
+      const isOpen = !menu.classList.contains('hidden');
+      menu.classList.toggle('hidden');
+      newIconMenu.style.display = isOpen ? 'block' : 'none';
+      newIconClose.style.display = isOpen ? 'none' : 'block';
+      newBtn.setAttribute('aria-expanded', String(!isOpen));
+    });
+
+    // Close menu when a link is clicked
+    menu.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => {
+        menu.classList.add('hidden');
+        newIconMenu.style.display = 'block';
+        newIconClose.style.display = 'none';
+        newBtn.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
+
+  initMobileMenu();
+  document.addEventListener('astro:after-swap', initMobileMenu);
+</script>

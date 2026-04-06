@@ -1,0 +1,374 @@
+@import "tailwindcss";
+
+@theme {
+  --color-terminal-green: #4ade80;
+  --color-terminal-green-bright: #00ff41;
+  --color-terminal-green-muted: #b0bfb0;
+  --color-terminal-dark: #0a0a0a;
+  --color-terminal-dark-lighter: #1a1a1a;
+  --color-terminal-light: #f5f5f0;
+  --color-terminal-light-darker: #e0e0d8;
+  --font-family-mono: 'JetBrains Mono', monospace;
+}
+
+/* Base styles */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Dark theme (default) */
+html[data-theme="dark"] {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #1a1a1a;
+  --bg-card: #111111;
+  --text-primary: #b0bfb0;
+  --text-heading: #4ade80;
+  --text-accent: #00ff41;
+  --text-muted: #708070;
+  --border-color: #1a2e1a;
+  --glow-color: rgba(74, 222, 128, 0.12);
+}
+
+/* Light theme */
+html[data-theme="light"] {
+  --bg-primary: #f5f5f0;
+  --bg-secondary: #e8e8e0;
+  --bg-card: #ffffff;
+  --text-primary: #2d4a2d;
+  --text-heading: #1a6b1a;
+  --text-accent: #16a34a;
+  --text-muted: #5a7a5a;
+  --border-color: #c0d8c0;
+  --glow-color: rgba(26, 107, 26, 0.08);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Prose styles for blog posts */
+.prose {
+  color: var(--text-primary);
+  max-width: 72ch;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  color: var(--text-heading);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.prose h1 { font-size: 2rem; margin-top: 2rem; margin-bottom: 1rem; }
+.prose h2 { font-size: 1.5rem; margin-top: 1.75rem; margin-bottom: 0.75rem; }
+.prose h3 { font-size: 1.25rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+
+.prose p {
+  margin-bottom: 1.25rem;
+  line-height: 1.75;
+}
+
+.prose a {
+  color: var(--text-heading);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prose a:hover {
+  text-shadow: 0 0 8px var(--glow-color);
+}
+
+.prose code {
+  background-color: var(--bg-secondary);
+  padding: 0.15em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.prose pre {
+  background-color: var(--bg-secondary) !important;
+  padding: 1rem 1.25rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+}
+
+.prose ul, .prose ol {
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.prose ul { list-style-type: disc; }
+.prose ol { list-style-type: decimal; }
+
+.prose li {
+  margin-bottom: 0.25rem;
+  line-height: 1.75;
+}
+
+.prose blockquote {
+  border-left: 3px solid var(--text-heading);
+  padding-left: 1rem;
+  margin-bottom: 1.25rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.prose hr {
+  border-color: var(--border-color);
+  margin: 2rem 0;
+}
+
+/* Blinking cursor animation */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* Glitch text effect */
+.glitch {
+  position: relative;
+  display: inline-block;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.glitch::before {
+  color: #0ff;
+  z-index: -1;
+  animation: glitch-shift-1 4s infinite linear alternate-reverse;
+}
+
+.glitch::after {
+  color: #f0f;
+  z-index: -2;
+  animation: glitch-shift-2 3s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-shift-1 {
+  0%, 90%, 100% { clip-path: inset(0 0 0 0); transform: translate(0); }
+  92% { clip-path: inset(20% 0 40% 0); transform: translate(-2px, 1px); }
+  94% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
+  96% { clip-path: inset(40% 0 30% 0); transform: translate(-1px, 2px); }
+  98% { clip-path: inset(10% 0 70% 0); transform: translate(1px, -1px); }
+}
+
+@keyframes glitch-shift-2 {
+  0%, 88%, 100% { clip-path: inset(0 0 0 0); transform: translate(0); }
+  90% { clip-path: inset(50% 0 20% 0); transform: translate(2px, 1px); }
+  93% { clip-path: inset(10% 0 60% 0); transform: translate(-2px, -1px); }
+  95% { clip-path: inset(70% 0 5% 0); transform: translate(1px, 2px); }
+  97% { clip-path: inset(30% 0 40% 0); transform: translate(-1px, -2px); }
+}
+
+html[data-theme="light"] .glitch::before {
+  color: #065f46;
+}
+
+html[data-theme="light"] .glitch::after {
+  color: #059669;
+}
+
+/* Custom cursor */
+.custom-cursor {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  background-color: var(--text-heading);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  mix-blend-mode: difference;
+  opacity: 0;
+}
+
+.custom-cursor.visible {
+  opacity: 1;
+}
+
+.custom-cursor.hovering {
+  transform: scale(4);
+  background-color: var(--text-accent);
+}
+
+/* Flashlight / spotlight effect */
+.flashlight {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: radial-gradient(
+    circle 300px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(74, 222, 128, 0.06) 0%,
+    transparent 100%
+  );
+}
+
+.flashlight.active {
+  opacity: 1;
+}
+
+html[data-theme="light"] .flashlight {
+  background: radial-gradient(
+    circle 300px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(22, 163, 74, 0.12) 0%,
+    transparent 100%
+  );
+}
+
+/* Terminal portrait */
+.terminal-portrait {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 220px;
+  z-index: 5;
+  filter: drop-shadow(0 0 20px rgba(74, 222, 128, 0.3))
+          drop-shadow(0 0 40px rgba(74, 222, 128, 0.1));
+}
+
+.terminal-portrait img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.terminal-portrait::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.3) 2px,
+    rgba(0, 0, 0, 0.3) 3px
+  );
+  pointer-events: none;
+  z-index: 1;
+  mask-image: url('/profile-terminal.png');
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: bottom;
+}
+
+html[data-theme="light"] .terminal-portrait {
+  filter: drop-shadow(0 0 20px rgba(22, 163, 74, 0.2))
+          drop-shadow(0 0 40px rgba(22, 163, 74, 0.08));
+}
+
+@media (min-width: 768px) {
+  .terminal-portrait {
+    width: 260px;
+  }
+}
+
+/* Glow effect for accent elements */
+.glow {
+  text-shadow: 0 0 8px rgba(74, 222, 128, 0.35), 0 0 16px rgba(74, 222, 128, 0.1);
+}
+
+html[data-theme="light"] .glow {
+  text-shadow: 0 0 8px rgba(22, 163, 74, 0.2), 0 0 16px rgba(22, 163, 74, 0.08);
+}
+
+/* Scroll reveal animations */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered children — uses animation instead of transition to avoid conflicts with tilt */
+.stagger-children > * {
+  opacity: 0;
+}
+
+.stagger-children.visible > * {
+  animation: stagger-fade-in 0.5s ease forwards;
+}
+
+.stagger-children.visible > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children.visible > *:nth-child(2) { animation-delay: 100ms; }
+.stagger-children.visible > *:nth-child(3) { animation-delay: 200ms; }
+.stagger-children.visible > *:nth-child(4) { animation-delay: 300ms; }
+.stagger-children.visible > *:nth-child(5) { animation-delay: 400ms; }
+.stagger-children.visible > *:nth-child(6) { animation-delay: 500ms; }
+
+@keyframes stagger-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* CRT scanline overlay */
+.scanlines {
+  position: relative;
+  overflow: hidden;
+}
+
+.scanlines::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 255, 65, 0.06) 2px,
+    rgba(0, 255, 65, 0.06) 3px
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+html[data-theme="light"] .scanlines::after {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 3px
+  );
+}
+
+/* Card tilt hover */
+.tilt-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transform-style: preserve-3d;
+}
+
+.tilt-card:hover {
+  box-shadow: 0 8px 30px rgba(74, 222, 128, 0.08);
+}
+

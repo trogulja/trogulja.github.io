@@ -1,0 +1,75 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  tags: string[];
+  github?: string;
+  npm?: string;
+  status?: string;
+}
+
+const { title, description, tags, github, npm, status = 'Active' } = Astro.props;
+---
+
+<BaseLayout title={title} description={description}>
+  <article class="py-8">
+    <a href="/#projects" class="inline-block text-sm font-mono mb-8 hover:underline" style={`color: var(--text-muted);`}>
+      &larr; Back to projects
+    </a>
+
+    <header class="mb-8">
+      <h1 class="font-mono text-2xl sm:text-3xl font-bold mb-3 glow" style={`color: var(--text-heading);`}>
+        {title}
+      </h1>
+      <p class="text-lg mb-4" style={`color: var(--text-primary);`}>
+        {description}
+      </p>
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        {tags.map((tag) => (
+          <span
+            class="text-xs font-mono px-2 py-0.5 rounded"
+            style={`background-color: var(--bg-secondary); color: var(--text-muted);`}
+          >
+            {tag}
+          </span>
+        ))}
+        <span
+          class="text-xs font-mono px-2 py-0.5 rounded"
+          style={`background-color: var(--bg-secondary); color: var(--text-heading);`}
+        >
+          {status}
+        </span>
+      </div>
+      <div class="flex gap-4">
+        {github && (
+          <a
+            href={github}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-sm font-mono hover:underline"
+            style={`color: var(--text-heading);`}
+          >
+            GitHub &rarr;
+          </a>
+        )}
+        {npm && (
+          <a
+            href={npm}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-sm font-mono hover:underline"
+            style={`color: var(--text-heading);`}
+          >
+            npm &rarr;
+          </a>
+        )}
+      </div>
+    </header>
+
+    <div class="border-t pt-8 space-y-8" style={`border-color: var(--border-color);`}>
+      <slot />
+    </div>
+  </article>
+</BaseLayout>

@@ -1,0 +1,182 @@
+---
+// Subtle Matrix rain background effect
+// Renders behind all content at z-index 0
+---
+
+<canvas id="matrix-rain" aria-hidden="true"></canvas>
+
+<style>
+  #matrix-rain {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+</style>
+
+<script>
+  function initMatrixRain() {
+    const canvas = document.getElementById('matrix-rain') as HTMLCanvasElement;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      canvas.style.display = 'none';
+      return;
+    }
+
+    // Respect saved preference
+    if (localStorage.getItem('matrix-rain') === 'off') {
+      canvas.style.display = 'none';
+      return;
+    }
+
+    // ── Tweak these ──────────────────────────────────────────
+    const FONT_SIZE = 14;          // character size in px
+    const FPS = 20;                // target frames per second
+    const SPAWN_CHANCE = 0.002;    // probability per column per frame to start a new stream (0–1)
+    const TRAIL_LENGTH = 150;      // how many characters the trail extends behind the head
+    const FADE_SPEED = 0.001;      // how fast the whole stream fades out (0–1 per frame)
+    const CHARS = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF<>/{}[];=+-*&^%$#@!';
+
+    // Dark mode                    // Light mode (needs higher alpha for contrast on bright bg)
+    const HEAD_ALPHA_DARK = 0.20;   const HEAD_ALPHA_LIGHT = 0.40;
+    const TRAIL_ALPHA_DARK = 0.08;  const TRAIL_ALPHA_LIGHT = 0.15;
+    // ────────────────────────────────────────────────────────
+
+    const charList = CHARS.split('');
+    let columns: number;
+
+    // Per-column state
+    let headY: number[];       // current head position (in cells)
+    let life: number[];        // stream life: 1 = just spawned, fades to 0
+    let charMap: string[][];   // fixed character per cell so trail doesn't flicker
+
+    function randomChar() {
+      return charList[Math.floor(Math.random() * charList.length)];
+    }
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const newCols = Math.floor(canvas.width / FONT_SIZE);
+      const rows = Math.ceil(canvas.height / FONT_SIZE) + TRAIL_LENGTH;
+
+      const oldHeadY = headY || [];
+      const oldLife = life || [];
+      const oldCharMap = charMap || [];
+
+      headY = new Array(newCols);
+      life = new Array(newCols);
+      charMap = new Array(newCols);
+
+      for (let i = 0; i < newCols; i++) {
+        headY[i] = oldHeadY[i] ?? -1;
+        life[i] = oldLife[i] ?? 0;
+        if (oldCharMap[i]) {
+          charMap[i] = oldCharMap[i];
+          // Extend if needed
+          while (charMap[i].length < rows) charMap[i].push(randomChar());
+        } else {
+          charMap[i] = Array.from({ length: rows }, randomChar);
+        }
+      }
+
+      columns = newCols;
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    function getThemeConfig() {
+      const light = document.documentElement.getAttribute('data-theme') === 'light';
+      return {
+        rgb: light ? '22, 163, 74' : '74, 222, 128',
+        headAlpha: light ? HEAD_ALPHA_LIGHT : HEAD_ALPHA_DARK,
+        trailAlpha: light ? TRAIL_ALPHA_LIGHT : TRAIL_ALPHA_DARK,
+      };
+    }
+
+    // Cancel previous animation if re-initializing (view transitions)
+    if ((window as any).__matrixRainId) {
+      cancelAnimationFrame((window as any).__matrixRainId);
+    }
+
+    let lastTime = 0;
+    const interval = 1000 / FPS;
+    const maxRow = () => Math.ceil(canvas.height / FONT_SIZE);
+
+    function frame(timestamp: number) {
+      (window as any).__matrixRainId = requestAnimationFrame(frame);
+      if (timestamp - lastTime < interval) return;
+      lastTime = timestamp;
+
+      const { rgb, headAlpha, trailAlpha } = getThemeConfig();
+
+      // Full clear — no ghosting, no artifacts
+      ctx!.clearRect(0, 0, canvas.width, canvas.height);
+      ctx!.font = `${FONT_SIZE}px monospace`;
+
+      for (let i = 0; i < columns; i++) {
+        // Try to spawn inactive columns
+        if (life[i] <= 0) {
+          if (Math.random() < SPAWN_CHANCE) {
+            life[i] = 1;
+            headY[i] = 0;
+            // Refresh characters for this column
+            for (let r = 0; r < charMap[i].length; r++) {
+              charMap[i][r] = randomChar();
+            }
+          }
+          continue;
+        }
+
+        const head = headY[i];
+        const rows = maxRow();
+
+        // Draw trail behind the head
+        for (let t = 0; t <= TRAIL_LENGTH; t++) {
+          const row = head - t;
+          if (row < 0 || row > rows + TRAIL_LENGTH) continue;
+
+          const x = i * FONT_SIZE;
+          const y = row * FONT_SIZE;
+          const char = charMap[i][row % charMap[i].length];
+
+          let alpha: number;
+          if (t === 0) {
+            alpha = headAlpha * life[i];
+          } else {
+            const trailFactor = 1 - (t / TRAIL_LENGTH);
+            alpha = trailAlpha * trailFactor * life[i];
+          }
+
+          if (alpha < 0.005) continue;
+
+          ctx!.fillStyle = `rgba(${rgb}, ${alpha})`;
+          ctx!.fillText(char, x, y);
+        }
+
+        // Advance head
+        headY[i]++;
+
+        // Fade out stream life
+        life[i] -= FADE_SPEED;
+
+        // Kill stream if trail is fully off-screen
+        if (head - TRAIL_LENGTH > rows) {
+          life[i] = 0;
+        }
+      }
+    }
+
+    (window as any).__matrixRainId = requestAnimationFrame(frame);
+  }
+
+  // Expose restart so RainToggle can re-init after turning on
+  (window as any).__matrixRainRestart = initMatrixRain;
+
+  initMatrixRain();
+  document.addEventListener('astro:after-swap', initMatrixRain);
+</script>
