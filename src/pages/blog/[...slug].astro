@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import SeriesNav from '../../components/SeriesNav.astro';
 import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -45,6 +46,7 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
         ))}
       </div>
     </header>
+    {post.data.series && <SeriesNav series={post.data.series} currentSlug={post.id} />}
     <div class="prose">
       <Content />
     </div>

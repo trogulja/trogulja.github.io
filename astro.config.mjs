@@ -9,6 +9,9 @@ import sitemap from '@astrojs/sitemap';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://trogulja.github.io',
+  markdown: {
+    smartypants: false,
+  },
   vite: {
     plugins: [tailwindcss()]
   },

@@ -1,0 +1,38 @@
+---
+import { getCollection } from 'astro:content';
+
+interface Props {
+  series: string;
+  currentSlug: string;
+}
+
+const { series, currentSlug } = Astro.props;
+
+const seriesPosts = (await getCollection('blog'))
+  .filter((post) => post.data.series === series && !post.data.draft)
+  .sort((a, b) => a.data.date.valueOf() - b.data.date.valueOf());
+
+const seriesTitle = series.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+---
+
+{seriesPosts.length > 1 && (
+  <nav
+    class="text-sm font-mono mb-8 px-4 py-3 rounded"
+    style={`background-color: var(--bg-secondary); border: 1px solid var(--border-color);`}
+  >
+    <p class="mb-2" style={`color: var(--text-muted);`}>
+      Series: <strong style={`color: var(--text-heading);`}>{seriesTitle}</strong>
+    </p>
+    <ol class="list-decimal list-inside space-y-1">
+      {seriesPosts.map((post) => (
+        <li style={post.id === currentSlug ? `color: var(--accent-color);` : `color: var(--text-muted);`}>
+          {post.id === currentSlug ? (
+            <span>{post.data.title}</span>
+          ) : (
+            <a href={`/blog/${post.id}`} class="hover:underline">{post.data.title}</a>
+          )}
+        </li>
+      ))}
+    </ol>
+  </nav>
+)}
