@@ -1,232 +1,197 @@
 ---
-// Subtle Matrix rain background effect
-// Renders behind all content at z-index 0
+// Subtle Matrix rain background effect.
+// Canvas is created via vanilla JS and appended to <html> (not <body>),
+// so Astro view transitions never touch it — no detach/reattach, no swap.
 ---
 
-<canvas id="matrix-rain" aria-hidden="true"></canvas>
+<script is:inline>
+  (function () {
+    // Guard: only initialize once across view transition navigations
+    // (is:inline scripts re-run on every Astro navigation)
+    if (window.__matrixRainInitialized) return;
+    window.__matrixRainInitialized = true;
 
-<style>
-  #matrix-rain {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-  }
-</style>
+    function initMatrixRain() {
+      // Reuse existing canvas or create a new one
+      var canvas = document.getElementById('matrix-rain');
+      if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.id = 'matrix-rain';
+        canvas.setAttribute('aria-hidden', 'true');
+        canvas.style.cssText = 'position:fixed;inset:0;z-index:0;pointer-events:none;';
+        document.documentElement.appendChild(canvas);
+      }
+      var ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
-<script>
-  function initMatrixRain() {
-    const canvas = document.getElementById('matrix-rain') as HTMLCanvasElement;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      canvas.style.display = 'none';
-      return;
-    }
-
-    // Respect saved preference
-    if (localStorage.getItem('matrix-rain') === 'off') {
-      canvas.style.display = 'none';
-      return;
-    }
-
-    // ── Tweak these ──────────────────────────────────────────
-    const FONT_SIZE = 14;          // character size in px
-    const FPS = 20;                // target frames per second
-    const SPAWN_CHANCE = 0.002;    // probability per column per frame to start a new stream (0–1)
-    const TRAIL_LENGTH = 150;      // how many characters the trail extends behind the head
-    const FADE_SPEED = 0.001;      // how fast the whole stream fades out (0–1 per frame)
-    const CHARS = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF<>/{}[];=+-*&^%$#@!';
-
-    // Dark mode                    // Light mode (needs higher alpha for contrast on bright bg)
-    const HEAD_ALPHA_DARK = 0.20;   const HEAD_ALPHA_LIGHT = 0.40;
-    const TRAIL_ALPHA_DARK = 0.08;  const TRAIL_ALPHA_LIGHT = 0.15;
-    // ────────────────────────────────────────────────────────
-
-    const charList = CHARS.split('');
-    let columns: number;
-
-    // Per-column state
-    let headY: number[];       // current head position (in cells)
-    let life: number[];        // stream life: 1 = just spawned, fades to 0
-    let charMap: string[][];   // fixed character per cell so trail doesn't flicker
-
-    function randomChar() {
-      return charList[Math.floor(Math.random() * charList.length)];
-    }
-
-    function resize() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      const newCols = Math.floor(canvas.width / FONT_SIZE);
-      const rows = Math.ceil(canvas.height / FONT_SIZE) + TRAIL_LENGTH;
-
-      const oldHeadY = headY || [];
-      const oldLife = life || [];
-      const oldCharMap = charMap || [];
-
-      headY = new Array(newCols);
-      life = new Array(newCols);
-      charMap = new Array(newCols);
-
-      for (let i = 0; i < newCols; i++) {
-        headY[i] = oldHeadY[i] ?? -1;
-        life[i] = oldLife[i] ?? 0;
-        if (oldCharMap[i]) {
-          charMap[i] = oldCharMap[i];
-          // Extend if needed
-          while (charMap[i].length < rows) charMap[i].push(randomChar());
-        } else {
-          charMap[i] = Array.from({ length: rows }, randomChar);
-        }
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        canvas.style.display = 'none';
+        return;
       }
 
-      columns = newCols;
-    }
-
-    resize();
-    // Only resize on width changes — iOS Safari fires resize when the address
-    // bar collapses/expands (height-only change), and resizing the canvas
-    // during scroll causes a reflow that makes Safari jump to the top.
-    let lastWidth = window.innerWidth;
-    function onResize() {
-      const w = window.innerWidth;
-      if (w === lastWidth) return;
-      lastWidth = w;
-      resize();
-    }
-    window.addEventListener('resize', onResize);
-
-    function getThemeConfig() {
-      const light = document.documentElement.getAttribute('data-theme') === 'light';
-      return {
-        rgb: light ? '22, 163, 74' : '74, 222, 128',
-        headAlpha: light ? HEAD_ALPHA_LIGHT : HEAD_ALPHA_DARK,
-        trailAlpha: light ? TRAIL_ALPHA_LIGHT : TRAIL_ALPHA_DARK,
-      };
-    }
-
-    // Clean up previous instance if re-initializing (view transitions)
-    if ((window as any).__matrixRainId) {
-      cancelAnimationFrame((window as any).__matrixRainId);
-    }
-    if ((window as any).__matrixRainResize) {
-      window.removeEventListener('resize', (window as any).__matrixRainResize);
-    }
-    (window as any).__matrixRainResize = onResize;
-
-    // Kill the animation completely (like clicking the off toggle).
-    // Used when we detect the canvas is no longer visible (e.g. Safari Reader View).
-    function killRain() {
-      if ((window as any).__matrixRainId) {
-        cancelAnimationFrame((window as any).__matrixRainId);
-        (window as any).__matrixRainId = null;
+      if (localStorage.getItem('matrix-rain') === 'off') {
+        canvas.style.display = 'none';
+        return;
       }
-      canvas.style.display = 'none';
-      // Update toggle icon if it exists
-      const iconOn = document.querySelector('#rain-toggle .icon-rain-on') as HTMLElement | null;
-      const iconOff = document.querySelector('#rain-toggle .icon-rain-off') as HTMLElement | null;
-      if (iconOn) iconOn.style.display = 'none';
-      if (iconOff) iconOff.style.display = 'block';
-    }
 
-    // Watch canvas visibility — if it becomes invisible (Safari Reader View
-    // covers the page), stop the animation permanently to prevent Reader View
-    // from detecting canvas changes and resetting scroll position.
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0] && entries[0].intersectionRatio === 0) {
-        killRain();
-        observer.disconnect();
+      // ── Tweak these ──────────────────────────────────────────
+      var FONT_SIZE = 14;
+      var FPS = 20;
+      var SPAWN_CHANCE = 0.002;
+      var TRAIL_LENGTH = 150;
+      var FADE_SPEED = 0.001;
+      var CHARS = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF<>/{}[];=+-*&^%$#@!';
+
+      var HEAD_ALPHA_DARK = 0.20;   var HEAD_ALPHA_LIGHT = 0.40;
+      var TRAIL_ALPHA_DARK = 0.08;  var TRAIL_ALPHA_LIGHT = 0.15;
+      // ────────────────────────────────────────────────────────
+
+      var charList = CHARS.split('');
+      var columns;
+      var headY, life, charMap;
+
+      function randomChar() {
+        return charList[Math.floor(Math.random() * charList.length)];
       }
-    }, { threshold: [0] });
-    observer.observe(canvas);
 
-    // Also stop on visibilitychange (tab switch, minimize)
-    function onVis() {
-      if (document.hidden) killRain();
-    }
-    if ((window as any).__matrixVisHandler) {
-      document.removeEventListener('visibilitychange', (window as any).__matrixVisHandler);
-    }
-    (window as any).__matrixVisHandler = onVis;
-    document.addEventListener('visibilitychange', onVis);
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        var newCols = Math.floor(canvas.width / FONT_SIZE);
+        var rows = Math.ceil(canvas.height / FONT_SIZE) + TRAIL_LENGTH;
 
-    let lastTime = 0;
-    const interval = 1000 / FPS;
-    const maxRow = () => Math.ceil(canvas.height / FONT_SIZE);
+        var oldHeadY = headY || [];
+        var oldLife = life || [];
+        var oldCharMap = charMap || [];
 
-    function frame(timestamp: number) {
-      (window as any).__matrixRainId = requestAnimationFrame(frame);
-      if (timestamp - lastTime < interval) return;
-      lastTime = timestamp;
+        headY = new Array(newCols);
+        life = new Array(newCols);
+        charMap = new Array(newCols);
 
-      const { rgb, headAlpha, trailAlpha } = getThemeConfig();
-
-      // Full clear — no ghosting, no artifacts
-      ctx!.clearRect(0, 0, canvas.width, canvas.height);
-      ctx!.font = `${FONT_SIZE}px monospace`;
-
-      for (let i = 0; i < columns; i++) {
-        // Try to spawn inactive columns
-        if (life[i] <= 0) {
-          if (Math.random() < SPAWN_CHANCE) {
-            life[i] = 1;
-            headY[i] = 0;
-            // Refresh characters for this column
-            for (let r = 0; r < charMap[i].length; r++) {
-              charMap[i][r] = randomChar();
-            }
-          }
-          continue;
-        }
-
-        const head = headY[i];
-        const rows = maxRow();
-
-        // Draw trail behind the head
-        for (let t = 0; t <= TRAIL_LENGTH; t++) {
-          const row = head - t;
-          if (row < 0 || row > rows + TRAIL_LENGTH) continue;
-
-          const x = i * FONT_SIZE;
-          const y = row * FONT_SIZE;
-          const char = charMap[i][row % charMap[i].length];
-
-          let alpha: number;
-          if (t === 0) {
-            alpha = headAlpha * life[i];
+        for (var i = 0; i < newCols; i++) {
+          headY[i] = oldHeadY[i] != null ? oldHeadY[i] : -1;
+          life[i] = oldLife[i] != null ? oldLife[i] : 0;
+          if (oldCharMap[i]) {
+            charMap[i] = oldCharMap[i];
+            while (charMap[i].length < rows) charMap[i].push(randomChar());
           } else {
-            const trailFactor = 1 - (t / TRAIL_LENGTH);
-            alpha = trailAlpha * trailFactor * life[i];
+            charMap[i] = [];
+            for (var r = 0; r < rows; r++) charMap[i].push(randomChar());
           }
-
-          if (alpha < 0.005) continue;
-
-          ctx!.fillStyle = `rgba(${rgb}, ${alpha})`;
-          ctx!.fillText(char, x, y);
         }
+        columns = newCols;
+      }
 
-        // Advance head
-        headY[i]++;
+      resize();
 
-        // Fade out stream life
-        life[i] -= FADE_SPEED;
+      var lastWidth = window.innerWidth;
+      function onResize() {
+        var w = window.innerWidth;
+        if (w === lastWidth) return;
+        lastWidth = w;
+        resize();
+      }
+      window.addEventListener('resize', onResize);
 
-        // Kill stream if trail is fully off-screen
-        if (head - TRAIL_LENGTH > rows) {
-          life[i] = 0;
+      function getThemeConfig() {
+        var light = document.documentElement.getAttribute('data-theme') === 'light';
+        return {
+          rgb: light ? '22, 163, 74' : '74, 222, 128',
+          headAlpha: light ? HEAD_ALPHA_LIGHT : HEAD_ALPHA_DARK,
+          trailAlpha: light ? TRAIL_ALPHA_LIGHT : TRAIL_ALPHA_DARK,
+        };
+      }
+
+      // Clean up if re-initializing (RainToggle restart)
+      if (window.__matrixRainId) {
+        cancelAnimationFrame(window.__matrixRainId);
+        window.__matrixRainId = null;
+      }
+
+      // Pause/resume on tab switch
+      function onVis() {
+        if (document.hidden) {
+          if (window.__matrixRainId) {
+            cancelAnimationFrame(window.__matrixRainId);
+            window.__matrixRainId = null;
+          }
+        } else if (localStorage.getItem('matrix-rain') !== 'off' && !window.__matrixRainId) {
+          window.__matrixRainId = requestAnimationFrame(frame);
         }
       }
+      if (window.__matrixVisHandler) {
+        document.removeEventListener('visibilitychange', window.__matrixVisHandler);
+      }
+      window.__matrixVisHandler = onVis;
+      document.addEventListener('visibilitychange', onVis);
+
+      var lastTime = 0;
+      var interval = 1000 / FPS;
+      var maxRow = function () { return Math.ceil(canvas.height / FONT_SIZE); };
+
+      function frame(timestamp) {
+        window.__matrixRainId = requestAnimationFrame(frame);
+        if (timestamp - lastTime < interval) return;
+        lastTime = timestamp;
+
+        var config = getThemeConfig();
+        var rgb = config.rgb;
+        var headAlpha = config.headAlpha;
+        var trailAlpha = config.trailAlpha;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.font = FONT_SIZE + 'px monospace';
+
+        for (var i = 0; i < columns; i++) {
+          if (life[i] <= 0) {
+            if (Math.random() < SPAWN_CHANCE) {
+              life[i] = 1;
+              headY[i] = 0;
+              for (var r = 0; r < charMap[i].length; r++) {
+                charMap[i][r] = randomChar();
+              }
+            }
+            continue;
+          }
+
+          var head = headY[i];
+          var rows = maxRow();
+
+          for (var t = 0; t <= TRAIL_LENGTH; t++) {
+            var row = head - t;
+            if (row < 0 || row > rows + TRAIL_LENGTH) continue;
+
+            var x = i * FONT_SIZE;
+            var y = row * FONT_SIZE;
+            var char = charMap[i][row % charMap[i].length];
+
+            var alpha;
+            if (t === 0) {
+              alpha = headAlpha * life[i];
+            } else {
+              var trailFactor = 1 - (t / TRAIL_LENGTH);
+              alpha = trailAlpha * trailFactor * life[i];
+            }
+
+            if (alpha < 0.005) continue;
+
+            ctx.fillStyle = 'rgba(' + rgb + ', ' + alpha + ')';
+            ctx.fillText(char, x, y);
+          }
+
+          headY[i]++;
+          life[i] -= FADE_SPEED;
+
+          if (head - TRAIL_LENGTH > rows) {
+            life[i] = 0;
+          }
+        }
+      }
+
+      window.__matrixRainId = requestAnimationFrame(frame);
     }
 
-    (window as any).__matrixRainId = requestAnimationFrame(frame);
-  }
-
-  // Expose restart so RainToggle can re-init after turning on
-  (window as any).__matrixRainRestart = initMatrixRain;
-
-  initMatrixRain();
-  document.addEventListener('astro:after-swap', initMatrixRain);
+    window.__matrixRainRestart = initMatrixRain;
+    initMatrixRain();
+  })();
 </script>
