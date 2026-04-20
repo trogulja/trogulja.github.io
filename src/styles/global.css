@@ -13,7 +13,7 @@
 
 /* Base styles */
 html {
-  scroll-behavior: smooth;
+  overscroll-behavior-y: none; /* Prevent Safari pull-to-refresh / scroll-to-top */
 }
 
 /* Dark theme (default) */

@@ -87,7 +87,17 @@
     }
 
     resize();
-    window.addEventListener('resize', resize);
+    // Only resize on width changes — iOS Safari fires resize when the address
+    // bar collapses/expands (height-only change), and resizing the canvas
+    // during scroll causes a reflow that makes Safari jump to the top.
+    let lastWidth = window.innerWidth;
+    function onResize() {
+      const w = window.innerWidth;
+      if (w === lastWidth) return;
+      lastWidth = w;
+      resize();
+    }
+    window.addEventListener('resize', onResize);
 
     function getThemeConfig() {
       const light = document.documentElement.getAttribute('data-theme') === 'light';
@@ -98,10 +108,50 @@
       };
     }
 
-    // Cancel previous animation if re-initializing (view transitions)
+    // Clean up previous instance if re-initializing (view transitions)
     if ((window as any).__matrixRainId) {
       cancelAnimationFrame((window as any).__matrixRainId);
     }
+    if ((window as any).__matrixRainResize) {
+      window.removeEventListener('resize', (window as any).__matrixRainResize);
+    }
+    (window as any).__matrixRainResize = onResize;
+
+    // Kill the animation completely (like clicking the off toggle).
+    // Used when we detect the canvas is no longer visible (e.g. Safari Reader View).
+    function killRain() {
+      if ((window as any).__matrixRainId) {
+        cancelAnimationFrame((window as any).__matrixRainId);
+        (window as any).__matrixRainId = null;
+      }
+      canvas.style.display = 'none';
+      // Update toggle icon if it exists
+      const iconOn = document.querySelector('#rain-toggle .icon-rain-on') as HTMLElement | null;
+      const iconOff = document.querySelector('#rain-toggle .icon-rain-off') as HTMLElement | null;
+      if (iconOn) iconOn.style.display = 'none';
+      if (iconOff) iconOff.style.display = 'block';
+    }
+
+    // Watch canvas visibility — if it becomes invisible (Safari Reader View
+    // covers the page), stop the animation permanently to prevent Reader View
+    // from detecting canvas changes and resetting scroll position.
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0] && entries[0].intersectionRatio === 0) {
+        killRain();
+        observer.disconnect();
+      }
+    }, { threshold: [0] });
+    observer.observe(canvas);
+
+    // Also stop on visibilitychange (tab switch, minimize)
+    function onVis() {
+      if (document.hidden) killRain();
+    }
+    if ((window as any).__matrixVisHandler) {
+      document.removeEventListener('visibilitychange', (window as any).__matrixVisHandler);
+    }
+    (window as any).__matrixVisHandler = onVis;
+    document.addEventListener('visibilitychange', onVis);
 
     let lastTime = 0;
     const interval = 1000 / FPS;

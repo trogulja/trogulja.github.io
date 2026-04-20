@@ -9,21 +9,21 @@ import RainToggle from './RainToggle.astro';
       ~/trogulja
     </a>
 
-    <!-- Desktop nav -->
-    <div class="hidden sm:flex items-center gap-6">
-      <a href="/" class="text-sm hover:underline" style={`color: var(--text-primary);`}>Home</a>
-      <a href="/blog" class="text-sm hover:underline" style={`color: var(--text-primary);`}>Blog</a>
-      <RainToggle />
-      <ThemeToggle />
-    </div>
+    <div class="flex items-center gap-3 sm:gap-6">
+      <!-- Desktop links -->
+      <div class="hidden sm:flex items-center gap-6">
+        <a href="/" class="text-sm hover:underline" style={`color: var(--text-primary);`}>Home</a>
+        <a href="/blog" class="text-sm hover:underline" style={`color: var(--text-primary);`}>Blog</a>
+      </div>
 
-    <!-- Mobile: theme toggle + hamburger -->
-    <div class="flex sm:hidden items-center gap-3">
+      <!-- Toggles (rendered once, visible on all breakpoints) -->
       <RainToggle />
       <ThemeToggle />
+
+      <!-- Mobile hamburger -->
       <button
         id="mobile-menu-btn"
-        class="p-1 cursor-pointer"
+        class="sm:hidden p-1 cursor-pointer"
         style={`color: var(--text-muted);`}
         aria-label="Toggle menu"
         aria-expanded="false"
