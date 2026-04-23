@@ -1,7 +1,7 @@
 ---
 title: "Three Stabs and One Cmd+Shift+."
 description: "Fifteen minutes of engineering. Three failed attempts. The answer was two keystrokes."
-date: 2026-04-22
+date: 2026-04-23
 tags: ["ai", "claude-code", "memory"]
 series: "memorija-pamcenja"
 draft: false
