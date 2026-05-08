@@ -1,3 +1,9 @@
+/* Declared before @import so this layer comes first in declaration order.
+   For !important rules, earlier-declared layers win (cascade layering is
+   reversed for !important). This lets us override Tailwind's preflight
+   [hidden] { display:none !important } rule (which lives in @layer base). */
+@layer reader-mode-overrides;
+
 @import "tailwindcss";
 
 @theme {
@@ -14,6 +20,19 @@
 /* Base styles */
 html {
   overscroll-behavior-y: none; /* Prevent Safari pull-to-refresh / scroll-to-top */
+}
+
+/* Reader Mode opt-out: the [hidden] attribute is the only reliable way to
+   exclude content from Safari Reader View. Author CSS overrides it on the
+   live site; Reader Mode strips author CSS, so the UA [hidden] rule wins.
+   Wrapped in a layer declared after Tailwind's layers so that, for !important
+   declarations (Tailwind's preflight uses display:none!important on [hidden]),
+   the last-declared layer wins. */
+@layer reader-mode-overrides {
+  canvas#matrix-rain[hidden],
+  [data-reader-exclude][hidden] {
+    display: block !important;
+  }
 }
 
 /* Dark theme (default) */

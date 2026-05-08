@@ -1,78 +1,138 @@
-<button
-  id="rain-toggle"
-  class="p-2 rounded-md transition-colors cursor-pointer"
-  style={`color: var(--text-muted); background-color: var(--bg-secondary);`}
-  aria-label="Toggle matrix rain"
-  title="Toggle matrix rain effect"
->
-  <!-- Rain on icon (cloud with rain) -->
-  <svg class="icon-rain-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
-    <path d="M4 14.899A7 7 0 1115.71 8h1.79a4.5 4.5 0 012.5 8.242"></path>
-    <path d="M16 14v6"></path>
-    <path d="M8 14v6"></path>
-    <path d="M12 16v6"></path>
-  </svg>
-  <!-- Rain off icon (cloud, no rain, strike-through) -->
-  <svg class="icon-rain-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
-    <path d="M4 14.899A7 7 0 1115.71 8h1.79a4.5 4.5 0 012.5 8.242"></path>
-    <line x1="2" y1="2" x2="22" y2="22"></line>
-  </svg>
-</button>
+<div class="relative" id="rain-toggle-wrap">
+  <button
+    id="rain-toggle"
+    class="p-2 rounded-md transition-colors cursor-pointer"
+    style={`color: var(--text-muted); background-color: var(--bg-secondary);`}
+    aria-label="Adjust matrix rain"
+    aria-haspopup="true"
+    aria-expanded="false"
+    title="Adjust matrix rain intensity"
+  >
+    <!-- Rain on icon (cloud with rain) -->
+    <svg class="icon-rain-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+      <path d="M4 14.899A7 7 0 1115.71 8h1.79a4.5 4.5 0 012.5 8.242"></path>
+      <path d="M16 14v6"></path>
+      <path d="M8 14v6"></path>
+      <path d="M12 16v6"></path>
+    </svg>
+    <!-- Rain off icon (cloud, strike-through) -->
+    <svg class="icon-rain-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+      <path d="M4 14.899A7 7 0 1115.71 8h1.79a4.5 4.5 0 012.5 8.242"></path>
+      <line x1="2" y1="2" x2="22" y2="22"></line>
+    </svg>
+  </button>
+
+  <div
+    id="rain-popover"
+    class="absolute right-0 mt-2 p-3 rounded-md border shadow-lg hidden z-50"
+    style={`background-color: var(--bg-secondary); border-color: var(--border-color); min-width: 180px;`}
+    role="dialog"
+    aria-label="Matrix rain intensity"
+  >
+    <label for="rain-intensity" class="block text-xs font-mono mb-2" style={`color: var(--text-muted);`}>
+      Rain intensity: <span id="rain-intensity-value">50</span>%
+    </label>
+    <input
+      id="rain-intensity"
+      type="range"
+      min="0"
+      max="100"
+      step="1"
+      value="50"
+      class="w-full cursor-pointer"
+      style={`accent-color: var(--text-heading);`}
+      aria-label="Matrix rain intensity"
+    />
+  </div>
+</div>
 
 <script>
   function initRainToggle() {
+    const wrap = document.getElementById('rain-toggle-wrap');
     const btn = document.getElementById('rain-toggle');
-    if (!btn) return;
+    const popover = document.getElementById('rain-popover');
+    const slider = document.getElementById('rain-intensity') as HTMLInputElement | null;
+    const valueLabel = document.getElementById('rain-intensity-value');
+    if (!wrap || !btn || !popover || !slider || !valueLabel) return;
 
     const iconOn = btn.querySelector('.icon-rain-on') as HTMLElement | null;
     const iconOff = btn.querySelector('.icon-rain-off') as HTMLElement | null;
     if (!iconOn || !iconOff) return;
 
-    function updateIcons() {
-      const enabled = localStorage.getItem('matrix-rain') !== 'off';
+    function readIntensity(): number {
+      const raw = localStorage.getItem('matrix-rain-intensity');
+      if (raw != null) {
+        const n = parseInt(raw, 10);
+        if (!isNaN(n)) return Math.max(0, Math.min(100, n));
+      }
+      // Legacy fallback: old "on" maps to the new default (50%)
+      if (localStorage.getItem('matrix-rain') === 'off') return 0;
+      return 50;
+    }
+
+    function syncUi(intensity: number) {
+      slider!.value = String(intensity);
+      valueLabel!.textContent = String(intensity);
+      const enabled = intensity > 0;
       iconOn!.style.display = enabled ? 'block' : 'none';
       iconOff!.style.display = enabled ? 'none' : 'block';
     }
 
-    updateIcons();
+    syncUi(readIntensity());
 
-    // Clone to remove old listeners
-    const newBtn = btn.cloneNode(true) as HTMLElement;
-    btn.parentNode?.replaceChild(newBtn, btn);
+    function closePopover() {
+      popover!.classList.add('hidden');
+      btn!.setAttribute('aria-expanded', 'false');
+    }
 
-    const newOn = newBtn.querySelector('.icon-rain-on') as HTMLElement;
-    const newOff = newBtn.querySelector('.icon-rain-off') as HTMLElement;
+    function openPopover() {
+      popover!.classList.remove('hidden');
+      btn!.setAttribute('aria-expanded', 'true');
+    }
 
-    // Re-apply icon state after clone
-    const enabled = localStorage.getItem('matrix-rain') !== 'off';
-    newOn.style.display = enabled ? 'block' : 'none';
-    newOff.style.display = enabled ? 'none' : 'block';
-
-    newBtn.addEventListener('click', () => {
-      const canvas = document.getElementById('matrix-rain') as HTMLCanvasElement | null;
-      const isOn = localStorage.getItem('matrix-rain') !== 'off';
-
-      if (isOn) {
-        // Turn off
-        localStorage.setItem('matrix-rain', 'off');
-        if (canvas) canvas.style.display = 'none';
-        if ((window as any).__matrixRainId) {
-          cancelAnimationFrame((window as any).__matrixRainId);
-          (window as any).__matrixRainId = null;
-        }
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (popover!.classList.contains('hidden')) {
+        syncUi(readIntensity());
+        openPopover();
       } else {
-        // Turn on
-        localStorage.setItem('matrix-rain', 'on');
-        if (canvas) {
-          canvas.style.display = 'block';
-          // Re-init the animation
-          (window as any).__matrixRainRestart?.();
-        }
+        closePopover();
       }
-
-      newOn.style.display = isOn ? 'none' : 'block';
-      newOff.style.display = isOn ? 'block' : 'none';
     });
+
+    slider.addEventListener('input', () => {
+      const intensity = parseInt(slider.value, 10);
+      localStorage.setItem('matrix-rain-intensity', String(intensity));
+      // Clear legacy key once user touches the new control
+      localStorage.removeItem('matrix-rain');
+      syncUi(intensity);
+      const setter = (window as any).__matrixRainSetIntensity;
+      if (typeof setter === 'function') setter(intensity / 50);
+    });
+
+    const w = window as any;
+    if (w.__rainToggleDocClick) document.removeEventListener('click', w.__rainToggleDocClick);
+    if (w.__rainToggleDocKey) document.removeEventListener('keydown', w.__rainToggleDocKey);
+
+    w.__rainToggleDocClick = (e: MouseEvent) => {
+      const pop = document.getElementById('rain-popover');
+      const wr = document.getElementById('rain-toggle-wrap');
+      if (!pop || !wr || pop.classList.contains('hidden')) return;
+      if (!wr.contains(e.target as Node)) {
+        pop.classList.add('hidden');
+        document.getElementById('rain-toggle')?.setAttribute('aria-expanded', 'false');
+      }
+    };
+    w.__rainToggleDocKey = (e: KeyboardEvent) => {
+      const pop = document.getElementById('rain-popover');
+      if (!pop || pop.classList.contains('hidden')) return;
+      if (e.key === 'Escape') {
+        pop.classList.add('hidden');
+        document.getElementById('rain-toggle')?.setAttribute('aria-expanded', 'false');
+      }
+    };
+    document.addEventListener('click', w.__rainToggleDocClick);
+    document.addEventListener('keydown', w.__rainToggleDocKey);
   }
 
   initRainToggle();

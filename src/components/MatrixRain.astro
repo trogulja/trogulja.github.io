@@ -18,21 +18,31 @@
         canvas = document.createElement('canvas');
         canvas.id = 'matrix-rain';
         canvas.setAttribute('aria-hidden', 'true');
+        // [hidden] excludes the canvas from Safari Reader View. Author CSS
+        // (canvas#matrix-rain[hidden] { display:block }) overrides it on the
+        // live site; Reader Mode strips author CSS so [hidden] wins.
+        canvas.hidden = true;
         canvas.style.cssText = 'position:fixed;inset:0;z-index:0;pointer-events:none;';
         document.documentElement.appendChild(canvas);
       }
       var ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        canvas.style.display = 'none';
-        return;
+      // Slider is 0..100, where 50 = the original "on" look (multiplier 1.0).
+      // 100 maps to 2.0 (twice as visible). 0 = off.
+      function readIntensity() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 0;
+        var raw = localStorage.getItem('matrix-rain-intensity');
+        if (raw != null) {
+          var n = parseInt(raw, 10);
+          if (isNaN(n)) return 1;
+          return Math.max(0, Math.min(2, n / 50));
+        }
+        if (localStorage.getItem('matrix-rain') === 'off') return 0;
+        return 1;
       }
 
-      if (localStorage.getItem('matrix-rain') === 'off') {
-        canvas.style.display = 'none';
-        return;
-      }
+      window.__matrixRainIntensity = readIntensity();
 
       // ── Tweak these ──────────────────────────────────────────
       var FONT_SIZE = 14;
@@ -115,7 +125,7 @@
             cancelAnimationFrame(window.__matrixRainId);
             window.__matrixRainId = null;
           }
-        } else if (localStorage.getItem('matrix-rain') !== 'off' && !window.__matrixRainId) {
+        } else if (window.__matrixRainIntensity > 0 && !window.__matrixRainId) {
           window.__matrixRainId = requestAnimationFrame(frame);
         }
       }
@@ -136,8 +146,9 @@
 
         var config = getThemeConfig();
         var rgb = config.rgb;
-        var headAlpha = config.headAlpha;
-        var trailAlpha = config.trailAlpha;
+        var intensity = window.__matrixRainIntensity != null ? window.__matrixRainIntensity : 1;
+        var headAlpha = config.headAlpha * intensity;
+        var trailAlpha = config.trailAlpha * intensity;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.font = FONT_SIZE + 'px monospace';
@@ -188,7 +199,23 @@
         }
       }
 
-      window.__matrixRainId = requestAnimationFrame(frame);
+      window.__matrixRainSetIntensity = function (value) {
+        var clamped = Math.max(0, Math.min(2, value));
+        window.__matrixRainIntensity = clamped;
+        if (clamped <= 0) {
+          if (window.__matrixRainId) {
+            cancelAnimationFrame(window.__matrixRainId);
+            window.__matrixRainId = null;
+          }
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        } else if (!window.__matrixRainId && !document.hidden) {
+          window.__matrixRainId = requestAnimationFrame(frame);
+        }
+      };
+
+      if (window.__matrixRainIntensity > 0) {
+        window.__matrixRainId = requestAnimationFrame(frame);
+      }
     }
 
     window.__matrixRainRestart = initMatrixRain;
