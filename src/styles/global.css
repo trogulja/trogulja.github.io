@@ -119,6 +119,17 @@ body {
   padding: 0;
 }
 
+/* Shiki dual-theme: dark colors are inline (default), light colors live in
+   --shiki-light vars. Swap token colors in when the document is in light
+   mode (the pre background stays on var(--bg-secondary) above). */
+html[data-theme="light"] .prose pre.astro-code,
+html[data-theme="light"] .prose pre.astro-code span {
+  color: var(--shiki-light) !important;
+  font-style: var(--shiki-light-font-style) !important;
+  font-weight: var(--shiki-light-font-weight) !important;
+  text-decoration: var(--shiki-light-text-decoration) !important;
+}
+
 .prose ul, .prose ol {
   margin-bottom: 1.25rem;
   padding-left: 1.5rem;

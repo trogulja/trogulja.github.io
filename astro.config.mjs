@@ -11,6 +11,13 @@ export default defineConfig({
   site: 'https://trogulja.github.io',
   markdown: {
     smartypants: false,
+    shikiConfig: {
+      themes: {
+        dark: 'github-dark',
+        light: 'github-light',
+      },
+      defaultColor: 'dark',
+    },
   },
   vite: {
     plugins: [tailwindcss()]
