@@ -60,11 +60,18 @@ const ogImageURL = new URL(ogImage, Astro.site);
     <title>{pageTitle}</title>
     <ClientRouter />
     <script is:inline>
-      // Apply saved theme immediately to prevent flash
+      // Apply saved theme immediately to prevent flash, both on initial load
+      // and on every ClientRouter swap (otherwise the incoming document's
+      // hard-coded data-theme="dark" on <html> wins after navigation).
       (function() {
-        const saved = localStorage.getItem('theme');
-        const theme = saved || 'dark';
-        document.documentElement.setAttribute('data-theme', theme);
+        const apply = (root) => {
+          const saved = localStorage.getItem('theme');
+          root.setAttribute('data-theme', saved || 'dark');
+        };
+        apply(document.documentElement);
+        document.addEventListener('astro:before-swap', (e) => {
+          apply(e.newDocument.documentElement);
+        });
       })();
     </script>
     <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "e4cedd0a90da4577acb30792905ec5b2"}'></script>
