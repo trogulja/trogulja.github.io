@@ -1,6 +1,6 @@
 ---
 title: "Behavior Isn't Knowledge"
-description: "Two kinds of memory, and the trick I almost missed."
+description: "Behavioral rules vs. factual knowledge in a personal AI memory system, and the one question that decides where something belongs."
 date: 2026-05-08
 tags: ["ai", "claude-code", "memory"]
 series: "memorija-pamcenja"

@@ -1,6 +1,6 @@
 ---
 title: "Three Stabs and One Cmd+Shift+."
-description: "Fifteen minutes of engineering. Three failed attempts. The answer was three keystrokes."
+description: "Trying to make Obsidian see a hidden folder on macOS. Three over-engineered attempts before remembering `Cmd+Shift+.` was a built-in shortcut, and the CLAUDE.md rule that came out of it."
 date: 2026-04-23
 tags: ["ai", "claude-code", "memory"]
 series: "memorija-pamcenja"
